@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "437660843680",
+    "project_id": "annapurna-92ffd",
+    "storage_bucket": "annapurna-92ffd.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:437660843680:android:41c0cc445e9191c3f513c5",
+        "android_client_info": {
+          "package_name": "com.example.ledgerapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC76cgAFaFGvlcjpxI7TjoEJDrraIUaK3I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
