@@ -252,6 +252,100 @@ app.delete("/orders/:id", (req, res) => {
   });
 });
 
+///////////////////////////// Bills API ////////////////////////////////////////
+// ✅ Add Bill API
+app.post("/bills", (req, res) => {
+  const { customer_id, total_amount, start_date, end_date } = req.body;
+
+  if (!customer_id || !total_amount || !start_date || !end_date) {
+    return res.status(400).json({ error: "❌ Missing required fields!" });
+  }
+
+  const sql = `INSERT INTO bills (customer_id, total_amount, start_date, end_date) VALUES (?, ?, ?, ?)`;
+  db.query(sql, [customer_id, total_amount, start_date, end_date], (err, result) => {
+    if (err) {
+      console.error("❌ Error adding bill:", err.message);
+      return res.status(500).json({ error: "❌ Failed to add bill!" });
+    }
+    res.status(201).json({ message: "✅ Bill added successfully!", bill_id: result.insertId });
+  });
+});
+
+// ✅ Get All Bills API
+app.get("/bills", (req, res) => {
+  const sql = `SELECT bills.*, customers.name AS customer_name 
+               FROM bills 
+               JOIN customers ON bills.customer_id = customers.id 
+               ORDER BY bills.created_at DESC`;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("❌ Error fetching bills:", err.message);
+      return res.status(500).json({ error: "❌ Failed to fetch bills!" });
+    }
+    res.status(200).json(results);
+  });
+});
+
+// ✅ Get Bill by ID API
+app.get("/bills/:id", (req, res) => {
+  const billId = req.params.id;
+  const sql = `SELECT bills.*, customers.name AS customer_name 
+               FROM bills 
+               JOIN customers ON bills.customer_id = customers.id 
+               WHERE bills.id = ?`;
+
+  db.query(sql, [billId], (err, result) => {
+    if (err) {
+      console.error("❌ Error fetching bill:", err.message);
+      return res.status(500).json({ error: "❌ Failed to fetch bill!" });
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ error: "❌ Bill not found!" });
+    }
+    res.status(200).json(result[0]);
+  });
+});
+
+// ✅ Update Bill API
+app.put("/bills/:id", (req, res) => {
+  const billId = req.params.id;
+  const { customer_id, total_amount, start_date, end_date } = req.body;
+
+  if (!customer_id || !total_amount || !start_date || !end_date) {
+    return res.status(400).json({ error: "❌ Missing required fields!" });
+  }
+
+  const sql = `UPDATE bills SET customer_id = ?, total_amount = ?, start_date = ?, end_date = ? WHERE id = ?`;
+  db.query(sql, [customer_id, total_amount, start_date, end_date, billId], (err, result) => {
+    if (err) {
+      console.error("❌ Error updating bill:", err.message);
+      return res.status(500).json({ error: "❌ Failed to update bill!" });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "❌ Bill not found!" });
+    }
+    res.status(200).json({ message: "✅ Bill updated successfully!" });
+  });
+});
+
+// ✅ Delete Bill API
+app.delete("/bills/:id", (req, res) => {
+  const billId = req.params.id;
+  const sql = `DELETE FROM bills WHERE id = ?`;
+
+  db.query(sql, [billId], (err, result) => {
+    if (err) {
+      console.error("❌ Error deleting bill:", err.message);
+      return res.status(500).json({ error: "❌ Failed to delete bill!" });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "❌ Bill not found!" });
+    }
+    res.status(200).json({ message: "✅ Bill deleted successfully!" });
+  });
+});
+
 
 
 // ✅ Test API Route
