@@ -254,77 +254,60 @@ app.delete("/orders/:id", (req, res) => {
 
 ///////////////////////////// Bills API ////////////////////////////////////////
 // ✅ Generate Bill API (Dynamically Calculate Total from Orders)
-app.post("/bills/generate", (req, res) => {
+app.post("/bills/generate", async (req, res) => {
   const { customer_id, start_date, end_date } = req.body;
 
   if (!customer_id || !start_date || !end_date) {
-    return res.status(400).json({ error: "❌ Missing required fields!" });
+    return res.status(400).json({ error: "All fields are required!" });
   }
 
-  // Step 1: Fetch Orders for the Customer within Date Range
-  const getOrdersQuery = `
-    SELECT order_details 
-    FROM orders 
-    WHERE customer_id = ? 
-    AND order_date BETWEEN ? AND ?`;
-
-  db.query(getOrdersQuery, [customer_id, start_date, end_date], (err, orders) => {
-    if (err) {
-      console.error("❌ Error fetching orders:", err.message);
-      return res.status(500).json({ error: "❌ Failed to fetch orders!" });
-    }
+  try {
+    // Step 1: Fetch orders within the selected date range
+    const [orders] = await db.promise().query(
+      "SELECT order_details FROM orders WHERE customer_id = ? AND order_date BETWEEN ? AND ?",
+      [customer_id, start_date, end_date]
+    );
 
     if (orders.length === 0) {
-      return res.status(404).json({ error: "❌ No orders found in this date range!" });
+      return res.status(404).json({ error: "No orders found for this customer in the given date range." });
     }
 
-    // Step 2: Extract Order Items
-    let orderItems = [];
-    orders.forEach((order) => {
-      const items = JSON.parse(order.order_details); // Assuming order_details is stored as JSON
-      orderItems.push(...items);
+    // Step 2: Extract ordered items
+    let orderedItems = [];
+    orders.forEach(order => {
+      orderedItems.push(order.order_details);
     });
 
-    // Step 3: Calculate Total from Menu Prices
+    // Step 3: Fetch prices from menu table
     let totalAmount = 0;
+    for (let item of orderedItems) {
+      const [menuItem] = await db.promise().query(
+        "SELECT price FROM menu WHERE item_name = ?",
+        [item]
+      );
 
-    // Query to fetch menu item prices
-    const getMenuPricesQuery = `
-      SELECT item_name, price 
-      FROM menu 
-      WHERE item_name IN (?)`;
-
-    db.query(getMenuPricesQuery, [orderItems], (err, menuPrices) => {
-      if (err) {
-        console.error("❌ Error fetching menu prices:", err.message);
-        return res.status(500).json({ error: "❌ Failed to fetch menu prices!" });
+      if (menuItem.length > 0) {
+        totalAmount += parseFloat(menuItem[0].price);
       }
+    }
 
-      // Calculate total price
-      menuPrices.forEach((item) => {
-        totalAmount += item.price;
-      });
+    // Step 4: Insert the generated bill into `bills` table
+    const [result] = await db.promise().query(
+      "INSERT INTO bills (customer_id, total_amount, start_date, end_date) VALUES (?, ?, ?, ?)",
+      [customer_id, totalAmount, start_date, end_date]
+    );
 
-      // Step 4: Insert Bill into the Bills Table
-      const insertBillQuery = `
-        INSERT INTO bills (customer_id, total_amount, start_date, end_date) 
-        VALUES (?, ?, ?, ?)`;
-
-      db.query(insertBillQuery, [customer_id, totalAmount, start_date, end_date], (err, result) => {
-        if (err) {
-          console.error("❌ Error inserting bill:", err.message);
-          return res.status(500).json({ error: "❌ Failed to generate bill!" });
-        }
-
-        res.status(201).json({ 
-          message: "✅ Bill generated successfully!", 
-          bill_id: result.insertId, 
-          total_amount: totalAmount 
-        });
-      });
+    res.json({
+      message: "Bill generated successfully",
+      bill_id: result.insertId,
+      total_amount: totalAmount,
     });
-  });
+  } catch (error) {
+    console.error("Error generating bill:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
+
 
 
 // ✅ Test API Route
