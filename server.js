@@ -26,7 +26,7 @@ db.connect((err) => {
   }
 });
 
-// ✅ Customers API (CRUD Operations)
+////////////////////////////////Customers API (CRUD Operations) /////////////////////
 // 🔹 Get all customers
 app.get("/customers", (req, res) => {
   db.query("SELECT * FROM customers", (err, results) => {
@@ -84,6 +84,78 @@ app.delete("/customers/:id", (req, res) => {
       return res.status(500).json({ error: err.message });
     }
     res.json({ message: "Customer deleted successfully" });
+  });
+});
+
+/////////////////////////////// Menu API //////////////////////////////////////////
+// ✅ Create (Add a new menu item)
+app.post("/menu", (req, res) => {
+  const { item_name, category, price, quantity_unit, description } = req.body;
+  const sql = "INSERT INTO menu (item_name, category, price, quantity_unit, description) VALUES (?, ?, ?, ?, ?)";
+  
+  db.query(sql, [item_name, category, price, quantity_unit, description], (err, result) => {
+      if (err) {
+          console.error("❌ Error adding menu item:", err);
+          res.status(500).json({ error: "Failed to add menu item" });
+      } else {
+          res.status(201).json({ message: "✅ Menu item added successfully!", id: result.insertId });
+      }
+  });
+});
+
+// ✅ Read (Get all menu items)
+app.get("/menu", (req, res) => {
+  db.query("SELECT * FROM menu", (err, results) => {
+      if (err) {
+          console.error("❌ Error fetching menu:", err);
+          res.status(500).json({ error: "Failed to fetch menu" });
+      } else {
+          res.status(200).json(results);
+      }
+  });
+});
+
+// ✅ Read (Get a single menu item by ID)
+app.get("/menu/:id", (req, res) => {
+  const { id } = req.params;
+  db.query("SELECT * FROM menu WHERE id = ?", [id], (err, result) => {
+      if (err) {
+          console.error("❌ Error fetching menu item:", err);
+          res.status(500).json({ error: "Failed to fetch menu item" });
+      } else if (result.length === 0) {
+          res.status(404).json({ error: "Menu item not found" });
+      } else {
+          res.status(200).json(result[0]);
+      }
+  });
+});
+
+// ✅ Update (Edit a menu item by ID)
+app.put("/menu/:id", (req, res) => {
+  const { id } = req.params;
+  const { item_name, category, price, quantity_unit, description } = req.body;
+
+  const sql = "UPDATE menu SET item_name=?, category=?, price=?, quantity_unit=?, description=? WHERE id=?";
+  db.query(sql, [item_name, category, price, quantity_unit, description, id], (err, result) => {
+      if (err) {
+          console.error("❌ Error updating menu item:", err);
+          res.status(500).json({ error: "Failed to update menu item" });
+      } else {
+          res.status(200).json({ message: "✅ Menu item updated successfully!" });
+      }
+  });
+});
+
+// ✅ Delete (Remove a menu item by ID)
+app.delete("/menu/:id", (req, res) => {
+  const { id } = req.params;
+  db.query("DELETE FROM menu WHERE id = ?", [id], (err, result) => {
+      if (err) {
+          console.error("❌ Error deleting menu item:", err);
+          res.status(500).json({ error: "Failed to delete menu item" });
+      } else {
+          res.status(200).json({ message: "✅ Menu item deleted successfully!" });
+      }
   });
 });
 
