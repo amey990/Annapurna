@@ -159,6 +159,100 @@ app.delete("/menu/:id", (req, res) => {
   });
 });
 
+//////////////////////////////// Orders API //////////////////////////////////////
+// ✅ Add Order API
+app.post("/orders", (req, res) => {
+  const { customer_id, order_details, order_time, order_date, notes } = req.body;
+  if (!customer_id || !order_details || !order_time || !order_date) {
+    return res.status(400).json({ error: "❌ Missing required fields!" });
+  }
+
+  const sql = `INSERT INTO orders (customer_id, order_details, order_time, order_date, notes) VALUES (?, ?, ?, ?, ?)`;
+  db.query(sql, [customer_id, order_details, order_time, order_date, notes], (err, result) => {
+    if (err) {
+      console.error("❌ Error placing order:", err.message);
+      return res.status(500).json({ error: "❌ Failed to place order!" });
+    }
+    res.status(201).json({ message: "✅ Order placed successfully!", order_id: result.insertId });
+  });
+});
+
+// ✅ Get All Orders API
+app.get("/orders", (req, res) => {
+  const sql = `SELECT orders.*, customers.name AS customer_name 
+               FROM orders 
+               JOIN customers ON orders.customer_id = customers.id 
+               ORDER BY orders.created_at DESC`;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("❌ Error fetching orders:", err.message);
+      return res.status(500).json({ error: "❌ Failed to fetch orders!" });
+    }
+    res.status(200).json(results);
+  });
+});
+
+// ✅ Get Order by ID API
+app.get("/orders/:id", (req, res) => {
+  const orderId = req.params.id;
+  const sql = `SELECT orders.*, customers.name AS customer_name 
+               FROM orders 
+               JOIN customers ON orders.customer_id = customers.id 
+               WHERE orders.id = ?`;
+
+  db.query(sql, [orderId], (err, result) => {
+    if (err) {
+      console.error("❌ Error fetching order:", err.message);
+      return res.status(500).json({ error: "❌ Failed to fetch order!" });
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ error: "❌ Order not found!" });
+    }
+    res.status(200).json(result[0]);
+  });
+});
+
+// ✅ Update Order API
+app.put("/orders/:id", (req, res) => {
+  const orderId = req.params.id;
+  const { customer_id, order_details, order_time, order_date, notes } = req.body;
+
+  if (!customer_id || !order_details || !order_time || !order_date) {
+    return res.status(400).json({ error: "❌ Missing required fields!" });
+  }
+
+  const sql = `UPDATE orders SET customer_id = ?, order_details = ?, order_time = ?, order_date = ?, notes = ? WHERE id = ?`;
+  db.query(sql, [customer_id, order_details, order_time, order_date, notes, orderId], (err, result) => {
+    if (err) {
+      console.error("❌ Error updating order:", err.message);
+      return res.status(500).json({ error: "❌ Failed to update order!" });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "❌ Order not found!" });
+    }
+    res.status(200).json({ message: "✅ Order updated successfully!" });
+  });
+});
+
+// ✅ Delete Order API
+app.delete("/orders/:id", (req, res) => {
+  const orderId = req.params.id;
+  const sql = `DELETE FROM orders WHERE id = ?`;
+
+  db.query(sql, [orderId], (err, result) => {
+    if (err) {
+      console.error("❌ Error deleting order:", err.message);
+      return res.status(500).json({ error: "❌ Failed to delete order!" });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "❌ Order not found!" });
+    }
+    res.status(200).json({ message: "✅ Order deleted successfully!" });
+  });
+});
+
+
 
 // ✅ Test API Route
 app.get("/", (req, res) => {
