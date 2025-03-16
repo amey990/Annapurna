@@ -308,6 +308,70 @@ app.post("/bills/generate", async (req, res) => {
   }
 });
 
+////////////////////////////// User profile API ////////////////////////////////////
+// POST API//
+app.post("/user-profile", (req, res) => {
+  const { user_id, name, email, contact_number, date_of_birth, photo_url } = req.body;
+
+  const query = "INSERT INTO user_profile (user_id, name, email, contact_number, date_of_birth, photo_url) VALUES (?, ?, ?, ?, ?, ?)";
+  db.query(query, [user_id, name, email, contact_number, date_of_birth, photo_url], (err, result) => {
+      if (err) {
+          return res.status(500).json({ error: "Database error: " + err.message });
+      }
+      res.json({ message: "User profile created successfully", profile_id: result.insertId });
+  });
+});
+
+// Get profile by ID //
+app.get("/user-profile/:id", (req, res) => {
+  const { id } = req.params;
+
+  const query = "SELECT * FROM user_profile WHERE user_id = ?";
+  db.query(query, [id], (err, result) => {
+      if (err) {
+          return res.status(500).json({ error: "Database error: " + err.message });
+      }
+      if (result.length === 0) {
+          return res.status(404).json({ message: "User profile not found" });
+      }
+      res.json(result[0]);
+  });
+});
+
+// Update User Profile //
+app.put("/user-profile/:id", (req, res) => {
+  const { id } = req.params;
+  const { name, email, contact_number, date_of_birth, photo_url } = req.body;
+
+  const query = "UPDATE user_profile SET name = ?, email = ?, contact_number = ?, date_of_birth = ?, photo_url = ? WHERE user_id = ?";
+  db.query(query, [name, email, contact_number, date_of_birth, photo_url, id], (err, result) => {
+      if (err) {
+          return res.status(500).json({ error: "Database error: " + err.message });
+      }
+      if (result.affectedRows === 0) {
+          return res.status(404).json({ message: "User profile not found" });
+      }
+      res.json({ message: "User profile updated successfully" });
+  });
+});
+
+// Delete API //
+app.delete("/user-profile/:id", (req, res) => {
+  const { id } = req.params;
+
+  const query = "DELETE FROM user_profile WHERE user_id = ?";
+  db.query(query, [id], (err, result) => {
+      if (err) {
+          return res.status(500).json({ error: "Database error: " + err.message });
+      }
+      if (result.affectedRows === 0) {
+          return res.status(404).json({ message: "User profile not found" });
+      }
+      res.json({ message: "User profile deleted successfully" });
+  });
+});
+
+
 
 
 // ✅ Test API Route
