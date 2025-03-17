@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const mysql = require("mysql2");
+const bcrypt = require('bcrypt');
+require('dotenv').config();
+const jwt = require('jsonwebtoken');
 
 dotenv.config();
 const app = express();
@@ -311,37 +314,40 @@ app.post("/bills/generate", async (req, res) => {
 //////////////////////////////////////// Users API /////////////////////////////////////////////////////
 // ✅ User Registration //
 app.post("/users/register", async (req, res) => {
+  console.log("Register API hit with data:", req.body);
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
-    return res.status(400).json({ error: "All fields are required!" });
+      console.log("Missing fields");
+      return res.status(400).json({ error: "All fields are required!" });
   }
 
   try {
-    // Check if the user already exists
-    db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
-      if (err) return res.status(500).json({ error: "Database error" });
+      db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
+          if (err) {
+              console.error("Database error:", err);
+              return res.status(500).json({ error: "Database error" });
+          }
 
-      if (results.length > 0) {
-        return res.status(400).json({ error: "User already exists" });
-      }
+          if (results.length > 0) {
+              console.log("User already exists");
+              return res.status(400).json({ error: "User already exists" });
+          }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+          const hashedPassword = await bcrypt.hash(password, 10);
+          db.query("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", [name, email, hashedPassword], (err, result) => {
+              if (err) {
+                  console.error("Insert Error:", err);
+                  return res.status(500).json({ error: "Database error" });
+              }
 
-      // Insert new user
-      db.query(
-        "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-        [name, email, hashedPassword],
-        (err, result) => {
-          if (err) return res.status(500).json({ error: "Database error" });
-
-          res.status(201).json({ message: "User registered successfully!" });
-        }
-      );
-    });
+              console.log("User registered successfully!");
+              res.status(201).json({ message: "User registered successfully!" });
+          });
+      });
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+      console.error("Server Error:", error);
+      res.status(500).json({ error: "Server error" });
   }
 });
 
