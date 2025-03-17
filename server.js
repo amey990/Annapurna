@@ -308,70 +308,63 @@ app.post("/bills/generate", async (req, res) => {
   }
 });
 
-////////////////////////////// User profile API ////////////////////////////////////
-// POST API//
-app.post("/user-profile", (req, res) => {
-  const { user_id, name, email, contact_number, date_of_birth, photo_url } = req.body;
+//////////////////////////////////////// Users API /////////////////////////////////////////////////////
+// ✅ User Registration (Signup)
+app.post("/users/register", async (req, res) => {
+  const { name, email, password } = req.body;
 
-  const query = "INSERT INTO user_profile (user_id, name, email, contact_number, date_of_birth, photo_url) VALUES (?, ?, ?, ?, ?, ?)";
-  db.query(query, [user_id, name, email, contact_number, date_of_birth, photo_url], (err, result) => {
-      if (err) {
-          return res.status(500).json({ error: "Database error: " + err.message });
+  // Check if user already exists
+  db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
+    if (err) return res.status(500).json({ error: "Database error" });
+
+    if (results.length > 0) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Insert user into database
+    db.query(
+      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+      [name, email, hashedPassword],
+      (err, result) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+
+        res.status(201).json({ message: "User registered successfully" });
       }
-      res.json({ message: "User profile created successfully", profile_id: result.insertId });
+    );
   });
 });
 
-// Get profile by ID //
-app.get("/user-profile/:id", (req, res) => {
-  const { id } = req.params;
+// ✅ User Login API
+app.post("/users/login", (req, res) => {
+  const { email, password } = req.body;
 
-  const query = "SELECT * FROM user_profile WHERE user_id = ?";
-  db.query(query, [id], (err, result) => {
-      if (err) {
-          return res.status(500).json({ error: "Database error: " + err.message });
-      }
-      if (result.length === 0) {
-          return res.status(404).json({ message: "User profile not found" });
-      }
-      res.json(result[0]);
+  // Check if user exists
+  db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
+    if (err) return res.status(500).json({ error: "Database error" });
+
+    if (results.length === 0) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    const user = results[0];
+
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.json({ message: "Login successful", token });
   });
 });
-
-// Update User Profile //
-app.put("/user-profile/:id", (req, res) => {
-  const { id } = req.params;
-  const { name, email, contact_number, date_of_birth, photo_url } = req.body;
-
-  const query = "UPDATE user_profile SET name = ?, email = ?, contact_number = ?, date_of_birth = ?, photo_url = ? WHERE user_id = ?";
-  db.query(query, [name, email, contact_number, date_of_birth, photo_url, id], (err, result) => {
-      if (err) {
-          return res.status(500).json({ error: "Database error: " + err.message });
-      }
-      if (result.affectedRows === 0) {
-          return res.status(404).json({ message: "User profile not found" });
-      }
-      res.json({ message: "User profile updated successfully" });
-  });
-});
-
-// Delete API //
-app.delete("/user-profile/:id", (req, res) => {
-  const { id } = req.params;
-
-  const query = "DELETE FROM user_profile WHERE user_id = ?";
-  db.query(query, [id], (err, result) => {
-      if (err) {
-          return res.status(500).json({ error: "Database error: " + err.message });
-      }
-      if (result.affectedRows === 0) {
-          return res.status(404).json({ message: "User profile not found" });
-      }
-      res.json({ message: "User profile deleted successfully" });
-  });
-});
-
-
 
 
 // ✅ Test API Route
