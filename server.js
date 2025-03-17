@@ -309,32 +309,40 @@ app.post("/bills/generate", async (req, res) => {
 });
 
 //////////////////////////////////////// Users API /////////////////////////////////////////////////////
-// ✅ User Registration (Signup)
+// ✅ User Registration //
 app.post("/users/register", async (req, res) => {
   const { name, email, password } = req.body;
 
-  // Check if user already exists
-  db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
-    if (err) return res.status(500).json({ error: "Database error" });
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: "All fields are required!" });
+  }
 
-    if (results.length > 0) {
-      return res.status(400).json({ error: "User already exists" });
-    }
+  try {
+    // Check if the user already exists
+    db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
+      if (err) return res.status(500).json({ error: "Database error" });
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Insert user into database
-    db.query(
-      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-      [name, email, hashedPassword],
-      (err, result) => {
-        if (err) return res.status(500).json({ error: "Database error" });
-
-        res.status(201).json({ message: "User registered successfully" });
+      if (results.length > 0) {
+        return res.status(400).json({ error: "User already exists" });
       }
-    );
-  });
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Insert new user
+      db.query(
+        "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+        [name, email, hashedPassword],
+        (err, result) => {
+          if (err) return res.status(500).json({ error: "Database error" });
+
+          res.status(201).json({ message: "User registered successfully!" });
+        }
+      );
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 // ✅ User Login API
