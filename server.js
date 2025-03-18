@@ -380,6 +380,24 @@ app.post("/users/login", (req, res) => {
   });
 });
 
+app.post("/users/get-name", (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email is required!" });
+  }
+
+  db.query("SELECT name FROM users WHERE email = ?", [email], (err, results) => {
+    if (err) return res.status(500).json({ error: "Database error" });
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({ name: results[0].name });
+  });
+});
+
 
 // ✅ Test API Route
 app.get("/", (req, res) => {
