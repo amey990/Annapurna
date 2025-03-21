@@ -164,17 +164,14 @@ app.delete("/menu/:id", (req, res) => {
 
 //////////////////////////////// Orders API //////////////////////////////////////
 // ✅ Add Order API
-// ✅ Add Order API 
 app.post("/orders", (req, res) => {
-  const { customer_id, menu_item_id, order_time, order_date, notes } = req.body;
-
-  if (!customer_id || !menu_item_id || !order_time || !order_date) {
+  const { customer_id, order_details, order_time, order_date, notes } = req.body;
+  if (!customer_id || !order_details || !order_time || !order_date) {
     return res.status(400).json({ error: "❌ Missing required fields!" });
   }
 
-  const sql = `INSERT INTO orders (customer_id, menu_item_id, order_time, order_date, notes) VALUES (?, ?, ?, ?, ?)`;
-  
-  db.query(sql, [customer_id, menu_item_id, order_time, order_date, notes], (err, result) => {
+  const sql = `INSERT INTO orders (customer_id, order_details, order_time, order_date, notes) VALUES (?, ?, ?, ?, ?)`;
+  db.query(sql, [customer_id, order_details, order_time, order_date, notes], (err, result) => {
     if (err) {
       console.error("❌ Error placing order:", err.message);
       return res.status(500).json({ error: "❌ Failed to place order!" });
@@ -220,16 +217,16 @@ app.get("/orders/:id", (req, res) => {
 });
 
 // ✅ Update Order API
-aapp.put("/orders/:id", (req, res) => {
+app.put("/orders/:id", (req, res) => {
   const orderId = req.params.id;
-  const { customer_id, menu_item_id, order_time, order_date, notes } = req.body;
+  const { customer_id, order_details, order_time, order_date, notes } = req.body;
 
-  if (!customer_id || !menu_item_id || !order_time || !order_date) {
+  if (!customer_id || !order_details || !order_time || !order_date) {
     return res.status(400).json({ error: "❌ Missing required fields!" });
   }
 
-  const sql = `UPDATE orders SET customer_id = ?, menu_item_id = ?, order_time = ?, order_date = ?, notes = ? WHERE id = ?`;
-  db.query(sql, [customer_id, menu_item_id, order_time, order_date, notes, orderId], (err, result) => {
+  const sql = `UPDATE orders SET customer_id = ?, order_details = ?, order_time = ?, order_date = ?, notes = ? WHERE id = ?`;
+  db.query(sql, [customer_id, order_details, order_time, order_date, notes, orderId], (err, result) => {
     if (err) {
       console.error("❌ Error updating order:", err.message);
       return res.status(500).json({ error: "❌ Failed to update order!" });
