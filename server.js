@@ -164,8 +164,25 @@ app.delete("/menu/:id", (req, res) => {
 
 //////////////////////////////// Orders API //////////////////////////////////////
 // ✅ Add Order API
+// app.post("/orders", (req, res) => {
+//   const { customer_id, order_details, order_time, order_date, notes } = req.body;
+//   if (!customer_id || !order_details || !order_time || !order_date) {
+//     return res.status(400).json({ error: "❌ Missing required fields!" });
+//   }
+
+//   const sql = `INSERT INTO orders (customer_id, order_details, order_time, order_date, notes) VALUES (?, ?, ?, ?, ?)`;
+//   db.query(sql, [customer_id, order_details, order_time, order_date, notes], (err, result) => {
+//     if (err) {
+//       console.error("❌ Error placing order:", err.message);
+//       return res.status(500).json({ error: "❌ Failed to place order!" });
+//     }
+//     res.status(201).json({ message: "✅ Order placed successfully!", order_id: result.insertId });
+//   });
+// });
+
 app.post("/orders", (req, res) => {
   const { customer_id, order_details, order_time, order_date, notes } = req.body;
+
   if (!customer_id || !order_details || !order_time || !order_date) {
     return res.status(400).json({ error: "❌ Missing required fields!" });
   }
@@ -179,6 +196,7 @@ app.post("/orders", (req, res) => {
     res.status(201).json({ message: "✅ Order placed successfully!", order_id: result.insertId });
   });
 });
+
 
 // ✅ Get All Orders API
 app.get("/orders", (req, res) => {
@@ -401,7 +419,7 @@ app.post("/users/get-name", (req, res) => {
 
 // ✅ Test API Route
 app.get("/", (req, res) => {
-  res.send("Backend is running...");
+  res.send("Backend is running buddy...");
 });
 
 // ✅ Start Server
