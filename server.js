@@ -261,9 +261,9 @@ app.delete("/orders/:id", (req, res) => {
 //Filter Order API //
 // ✅ Update API parameters to match the frontend (from & to)
 app.get("/orders/filter", (req, res) => {
-  const { customer_id, from_date, to_date } = req.query;
+  const { customer_id, from, to } = req.query;
 
-  if (!customer_id || !from_date || !to_date) {
+  if (!customer_id || !from || !to) {
     return res.status(400).json({ error: "Missing filters" });
   }
 
@@ -274,7 +274,7 @@ app.get("/orders/filter", (req, res) => {
                  AND order_date BETWEEN ? AND ?
                ORDER BY order_date`;
 
-  db.query(sql, [customer_id, from_date, to_date], (err, results) => {
+  db.query(sql, [customer_id, from, to], (err, results) => {
     if (err) {
       console.error("Error:", err);
       return res.status(500).json({ error: "Failed to fetch orders" });
