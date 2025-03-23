@@ -260,8 +260,39 @@ app.delete("/orders/:id", (req, res) => {
 
 //Filter Order API //
 // ✅ Update API parameters to match the frontend (from & to)
+// app.get("/orders/filter", (req, res) => {
+//   const { customer_id, from, to } = req.query; // ✅ Match frontend/postman params
+
+//   if (!customer_id || !from || !to) {
+//     return res.status(400).json({ error: "Missing filters" });
+//   }
+  
+//   const sql = `SELECT orders.*, customers.name AS customer_name 
+//                FROM orders 
+//                JOIN customers ON orders.customer_id = customers.id 
+//                WHERE orders.customer_id = ?
+//                  AND order_date BETWEEN ? AND ?
+//                ORDER BY order_date`;
+
+//   db.query(sql, [customer_id, from, to], (err, results) => {
+//     if (err) {
+//       console.error("Error:", err);
+//       return res.status(500).json({ error: "Failed to fetch orders" });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ error: "❌ Order not found!" });
+//     }
+
+//     res.status(200).json(results);
+//   });
+// });
+
+
 app.get("/orders/filter", (req, res) => {
-  const { customer_id, from, to } = req.query; // ✅ Match frontend/postman params
+  const { customer_id, from, to } = req.query;
+
+  console.log("👉 Filter Params:", { customer_id, from, to });
 
   if (!customer_id || !from || !to) {
     return res.status(400).json({ error: "Missing filters" });
@@ -271,7 +302,7 @@ app.get("/orders/filter", (req, res) => {
                FROM orders 
                JOIN customers ON orders.customer_id = customers.id 
                WHERE orders.customer_id = ?
-                 AND order_date BETWEEN ? AND ?
+                 AND DATE(order_date) BETWEEN ? AND ?
                ORDER BY order_date`;
 
   db.query(sql, [customer_id, from, to], (err, results) => {
@@ -287,6 +318,7 @@ app.get("/orders/filter", (req, res) => {
     res.status(200).json(results);
   });
 });
+
 
 
 // const PDFDocument = require("pdfkit");
