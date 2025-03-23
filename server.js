@@ -261,7 +261,7 @@ app.delete("/orders/:id", (req, res) => {
 //Filter Order API //
 // ✅ Update API parameters to match the frontend (from & to)
 app.get("/orders/filter", (req, res) => {
-  const { customer_id, from, to } = req.query;
+  const { customer_id, from, to } = req.query; // ✅ Match frontend/postman params
 
   if (!customer_id || !from || !to) {
     return res.status(400).json({ error: "Missing filters" });
@@ -289,38 +289,38 @@ app.get("/orders/filter", (req, res) => {
 });
 
 
-const PDFDocument = require("pdfkit");
+// const PDFDocument = require("pdfkit");
 
-app.get("/orders/report", (req, res) => {
-  const { customer_id, from_date, to_date } = req.query;
+// app.get("/orders/report", (req, res) => {
+//   const { customer_id, from_date, to_date } = req.query;
 
-  const sql = `SELECT orders.*, customers.name AS customer_name 
-               FROM orders 
-               JOIN customers ON orders.customer_id = customers.id 
-               WHERE orders.customer_id = ? 
-                 AND order_date BETWEEN ? AND ? 
-               ORDER BY order_date`;
+//   const sql = `SELECT orders.*, customers.name AS customer_name 
+//                FROM orders 
+//                JOIN customers ON orders.customer_id = customers.id 
+//                WHERE orders.customer_id = ? 
+//                  AND order_date BETWEEN ? AND ? 
+//                ORDER BY order_date`;
 
-  db.query(sql, [customer_id, from_date, to_date], (err, results) => {
-    if (err) return res.status(500).send("DB error");
+//   db.query(sql, [customer_id, from_date, to_date], (err, results) => {
+//     if (err) return res.status(500).send("DB error");
 
-    const doc = new PDFDocument();
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "attachment; filename=orders_report.pdf");
-    doc.pipe(res);
+//     const doc = new PDFDocument();
+//     res.setHeader("Content-Type", "application/pdf");
+//     res.setHeader("Content-Disposition", "attachment; filename=orders_report.pdf");
+//     doc.pipe(res);
 
-    doc.fontSize(20).text("Orders Report", { align: "center" });
-    doc.moveDown();
+//     doc.fontSize(20).text("Orders Report", { align: "center" });
+//     doc.moveDown();
 
-    results.forEach((order, i) => {
-      doc.fontSize(12).text(
-        `${i + 1}. ${order.customer_name} | ${order.order_details} | ${order.order_time} | ${order.order_date}`
-      );
-    });
+//     results.forEach((order, i) => {
+//       doc.fontSize(12).text(
+//         `${i + 1}. ${order.customer_name} | ${order.order_details} | ${order.order_time} | ${order.order_date}`
+//       );
+//     });
 
-    doc.end();
-  });
-});
+//     doc.end();
+//   });
+// });
 
 
 ///////////////////////////// Bills API ////////////////////////////////////////
