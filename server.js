@@ -260,29 +260,31 @@ app.delete("/orders/:id", (req, res) => {
 
 //Filter Order API //
 // ✅ Update API parameters to match the frontend (from & to)
-const { customer_id, from, to } = req.query;
+app.get("/orders/filter", (req, res) => {
+  const { customer_id, from, to } = req.query;
 
-if (!customer_id || !from || !to) {
-  return res.status(400).json({ error: "Missing filters" });
-}
-
-const sql = `SELECT orders.*, customers.name AS customer_name 
-             FROM orders 
-             JOIN customers ON orders.customer_id = customers.id 
-             WHERE orders.customer_id = ?
-               AND order_date BETWEEN ? AND ?
-             ORDER BY order_date`;
-
-db.query(sql, [customer_id, from, to], (err, results) => {
-  if (err) {
-    console.error("Error:", err);
-    return res.status(500).json({ error: "Failed to fetch orders" });
-  }
-  if (results.length === 0) {
-    return res.status(404).json({ error: "❌ Order not found!" });
+  if (!customer_id || !from || !to) {
+    return res.status(400).json({ error: "Missing filters" });
   }
 
-  res.status(200).json(results);
+  const sql = `SELECT orders.*, customers.name AS customer_name 
+               FROM orders 
+               JOIN customers ON orders.customer_id = customers.id 
+               WHERE orders.customer_id = ?
+                 AND order_date BETWEEN ? AND ?
+               ORDER BY order_date`;
+
+  db.query(sql, [customer_id, from, to], (err, results) => {
+    if (err) {
+      console.error("Error:", err);
+      return res.status(500).json({ error: "Failed to fetch orders" });
+    }
+    if (results.length === 0) {
+      return res.status(404).json({ error: "❌ Order not found!" });
+    }
+
+    res.status(200).json(results);
+  });
 });
 
 
@@ -419,7 +421,6 @@ app.post("/users/register", async (req, res) => {
 // ✅ User Login API
 app.post("/users/login", (req, res) => {
   const { email, password } = req.body;
-
   // Check if user exists
   db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
     if (err) return res.status(500).json({ error: "Database error" });
@@ -463,12 +464,10 @@ app.post("/users/get-name", (req, res) => {
   });
 });
 
-
 // ✅ Test API Route
 app.get("/", (req, res) => {
   res.send("Backend is running buddy...");
 });
-
 // ✅ Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
